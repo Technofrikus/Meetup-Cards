@@ -216,7 +216,23 @@
     probe.src = LOGO_CANDIDATES[index];
   }
 
-  var keyboards = (window.KEYBOARDS || []).filter(function (k) { return k && value(k, "name"); });
+  // keyboards.js holds plain "Field: value" lines; an empty line starts the next keyboard.
+  function parseKeyboards(text) {
+    var list = [];
+    var current = null;
+    String(text || "").split(/\r?\n/).forEach(function (line) {
+      line = line.trim();
+      if (!line) { current = null; return; }
+      if (line.charAt(0) === "#") return;
+      var colon = line.indexOf(":");
+      if (colon < 1) return;
+      if (!current) { current = {}; list.push(current); }
+      current[line.slice(0, colon).trim().toLowerCase()] = line.slice(colon + 1).trim();
+    });
+    return list;
+  }
+
+  var keyboards = parseKeyboards(window.KEYBOARDS).filter(function (k) { return k && value(k, "name"); });
   var sheets = document.getElementById("sheets");
   var hint = document.getElementById("hint");
 

@@ -1,20 +1,19 @@
-// One entry per keyboard. Edit, save, reload index.html, print.
-// Every field except "name" is optional – empty or missing fields are left off the card.
-window.KEYBOARDS = [
-  {
-    name: "Example 75",
-    status: "Daily driver",
-    switches: "Gateron Oil King, lubed, 63.5 g",
-    keycaps: "GMK Olivia",
-    plate: "FR4",
-    url: "example.com/keyboards/example-75",
-  },
-  {
-    name: "Example TKL",
-    status: "Work in progress",
-    switches: "Cherry MX Black, vintage",
-    keycaps: "ePBT 9009",
-    plate: "Aluminium",
-    url: "",
-  },
-];
+window.KEYBOARDS = String.raw`
+
+# One block per keyboard, separated by an empty line.
+# Leave out any line you do not need. Lines starting with # are ignored.
+
+Name: Example 75
+Status: Daily driver
+Switches: Gateron Oil King, lubed, 63.5 g
+Keycaps: GMK Olivia
+Plate: FR4
+URL: example.com/keyboards/example-75
+
+Name: Example TKL
+Status: Work in progress
+Switches: Cherry MX Black, vintage
+Keycaps: ePBT 9009
+Plate: Aluminium
+
+`;
