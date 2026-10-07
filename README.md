@@ -33,6 +33,7 @@ Keycaps: ePBT 9009
 | `Switches` |                                     |
 | `Keycaps` |                                     |
 | `Plate` |                                     |
+| `Notes` | Free text for anything else. `Note` and `Comment` work too. |
 | `URL` | Printed at the bottom of the card.  |
 
 Empty or missing fields are simply left off the card.

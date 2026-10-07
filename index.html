@@ -159,7 +159,10 @@
     ["switches", "Switches"],
     ["keycaps", "Keycaps"],
     ["plate", "Plate"],
+    ["notes", "Notes"],
   ];
+  // Alternative spellings accepted in keyboards.js
+  var ALIASES = { note: "notes", comment: "notes", comments: "notes" };
 
   function el(tag, className, text) {
     var node = document.createElement(tag);
@@ -227,7 +230,8 @@
       var colon = line.indexOf(":");
       if (colon < 1) return;
       if (!current) { current = {}; list.push(current); }
-      current[line.slice(0, colon).trim().toLowerCase()] = line.slice(colon + 1).trim();
+      var field = line.slice(0, colon).trim().toLowerCase();
+      current[ALIASES[field] || field] = line.slice(colon + 1).trim();
     });
     return list;
   }
