@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meetup Cards</title>
+<style>
+  @page { size: A4 portrait; margin: 0; }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #e9e9ec;
+    color: #111;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #fff;
+    border-bottom: 1px solid #d0d0d5;
+    font-size: 14px;
+  }
+  .toolbar button {
+    font: inherit;
+    padding: 6px 14px;
+    border: 1px solid #111;
+    border-radius: 6px;
+    background: #111;
+    color: #fff;
+    cursor: pointer;
+  }
+  .toolbar .hint { color: #666; }
+
+  /* One A4 sheet = 2 x 2 A6 cards */
+  .sheet {
+    width: 210mm;
+    height: 297mm;
+    margin: 16px auto;
+    background: #fff;
+    display: grid;
+    grid-template-columns: 105mm 105mm;
+    grid-template-rows: 148.5mm 148.5mm;
+    overflow: hidden;
+    break-after: page;
+  }
+  .sheet:last-child { break-after: auto; }
+
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 11mm 10mm 10mm;
+    overflow: hidden;
+  }
+  /* Cut guides along the sheet's centre lines */
+  .card:nth-child(odd) { border-right: 0.2mm dashed #bbb; }
+  .card:nth-child(-n+2) { border-bottom: 0.2mm dashed #bbb; }
+
+  .head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 6mm;
+    min-height: 20mm;
+  }
+  .name {
+    margin: 0;
+    font-size: 25pt;
+    line-height: 1.08;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+  }
+  .logo {
+    flex: none;
+    max-width: 24mm;
+    max-height: 18mm;
+    object-fit: contain;
+  }
+
+  .status {
+    align-self: flex-start;
+    margin-top: 4mm;
+    padding: 1.2mm 3.2mm;
+    border: 0.35mm solid #111;
+    border-radius: 99mm;
+    font-size: 9pt;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .specs {
+    margin: 9mm 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6mm;
+  }
+  .specs dt {
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #666;
+  }
+  .specs dd {
+    margin: 1mm 0 0;
+    font-size: 15pt;
+    line-height: 1.2;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .url {
+    margin-top: auto;
+    padding-top: 3mm;
+    border-top: 0.35mm solid #111;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 9pt;
+    overflow-wrap: anywhere;
+  }
+
+  .empty {
+    margin: 40px auto;
+    max-width: 480px;
+    text-align: center;
+    color: #666;
+  }
+
+  @media print {
+    body { background: none; }
+    .toolbar, .empty { display: none; }
+    .sheet { margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button type="button" onclick="window.print()">Print</button>
+  <span class="hint" id="hint"></span>
+</div>
+<main id="sheets"></main>
+
+<script src="keyboards.js"></script>
+<script>
+(function () {
+  var CARDS_PER_SHEET = 4;
+  var LOGO_CANDIDATES = ["logo.svg", "logo.png", "logo.jpg", "logo.jpeg", "logo.webp"];
+  var SPEC_FIELDS = [
+    ["switches", "Switches"],
+    ["keycaps", "Keycaps"],
+    ["plate", "Plate"],
+  ];
+
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function value(keyboard, field) {
+    var v = keyboard[field];
+    return v == null ? "" : String(v).trim();
+  }
+
+  function buildCard(keyboard) {
+    var card = el("section", "card");
+
+    var head = el("div", "head");
+    head.appendChild(el("h1", "name", value(keyboard, "name")));
+    card.appendChild(head);
+
+    var status = value(keyboard, "status");
+    if (status) card.appendChild(el("div", "status", status));
+
+    var specs = el("dl", "specs");
+    SPEC_FIELDS.forEach(function (field) {
+      var v = value(keyboard, field[0]);
+      if (!v) return;
+      var row = el("div");
+      row.appendChild(el("dt", null, field[1]));
+      row.appendChild(el("dd", null, v));
+      specs.appendChild(row);
+    });
+    if (specs.children.length) card.appendChild(specs);
+
+    var url = value(keyboard, "url");
+    if (url) card.appendChild(el("div", "url", url));
+
+    return card;
+  }
+
+  // The logo is optional: only add it to the cards once a file actually loaded.
+  function loadLogo(index) {
+    if (index >= LOGO_CANDIDATES.length) return;
+    var probe = new Image();
+    probe.onload = function () {
+      document.querySelectorAll(".head").forEach(function (head) {
+        var img = el("img", "logo");
+        img.src = probe.src;
+        img.alt = "";
+        head.appendChild(img);
+      });
+    };
+    probe.onerror = function () { loadLogo(index + 1); };
+    probe.src = LOGO_CANDIDATES[index];
+  }
+
+  var keyboards = (window.KEYBOARDS || []).filter(function (k) { return k && value(k, "name"); });
+  var sheets = document.getElementById("sheets");
+  var hint = document.getElementById("hint");
+
+  if (!keyboards.length) {
+    sheets.appendChild(el("p", "empty", "No keyboards found. Add entries to keyboards.js and reload."));
+    return;
+  }
+
+  for (var i = 0; i < keyboards.length; i += CARDS_PER_SHEET) {
+    var sheet = el("div", "sheet");
+    keyboards.slice(i, i + CARDS_PER_SHEET).forEach(function (k) { sheet.appendChild(buildCard(k)); });
+    while (sheet.children.length < CARDS_PER_SHEET) sheet.appendChild(el("section", "card"));
+    sheets.appendChild(sheet);
+  }
+
+  var sheetCount = Math.ceil(keyboards.length / CARDS_PER_SHEET);
+  hint.textContent = keyboards.length + (keyboards.length === 1 ? " card" : " cards") + " on " +
+    sheetCount + (sheetCount === 1 ? " sheet" : " sheets") +
+    " · print on A4 at 100% scale, no margins";
+
+  loadLogo(0);
+})();
+</script>
+</body>
+</html>
