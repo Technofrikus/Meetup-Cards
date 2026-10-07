@@ -38,6 +38,16 @@ Keycaps: ePBT 9009
 
 Empty or missing fields are simply left off the card.
 
+## Line breaks
+
+Type `\n` where you want a line break (works in every field except `Status`):
+
+```
+Keycaps: GMK Olivia\nRama Kate, Lake
+```
+
+Text that is too long for the card wraps automatically.
+
 ## Logo
 
 Put a file named `logo.svg`, `logo.png`, `logo.jpg`, `logo.jpeg` or `logo.webp`

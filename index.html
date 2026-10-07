@@ -78,6 +78,7 @@
     font-weight: 800;
     letter-spacing: -0.02em;
     overflow-wrap: anywhere;
+    white-space: pre-line;
   }
   .logo {
     flex: none;
@@ -117,6 +118,7 @@
     line-height: 1.2;
     font-weight: 500;
     overflow-wrap: anywhere;
+    white-space: pre-line;
   }
 
   .url {
@@ -126,6 +128,7 @@
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-size: 9pt;
     overflow-wrap: anywhere;
+    white-space: pre-line;
   }
 
   .empty {
@@ -231,7 +234,8 @@
       if (colon < 1) return;
       if (!current) { current = {}; list.push(current); }
       var field = line.slice(0, colon).trim().toLowerCase();
-      current[ALIASES[field] || field] = line.slice(colon + 1).trim();
+      // A literal \n in the text forces a line break on the card.
+      current[ALIASES[field] || field] = line.slice(colon + 1).trim().replace(/\s*\\n\s*/g, "\n");
     });
     return list;
   }
