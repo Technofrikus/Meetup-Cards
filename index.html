@@ -204,8 +204,8 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: calc(6mm * var(--s));
-    min-height: calc(20mm * var(--s));
   }
+  .title { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
   .name {
     margin: 0;
     font-size: calc(25pt * var(--s) * var(--fit, 1));
@@ -224,7 +224,7 @@
 
   .status {
     align-self: flex-start;
-    margin-top: calc(4mm * var(--s));
+    margin-top: calc(3.5mm * var(--s));
     padding: calc(1.2mm * var(--s)) calc(3.2mm * var(--s));
     border: 0.35mm solid #111;
     border-radius: 99mm;
@@ -461,13 +461,15 @@
       if (settings.view === "form") focusEntry(index, "[data-field=name]");
     });
 
+    // Name and status sit together on the left; the logo stays on the right.
     var head = el("div", "head");
-    head.appendChild(el("h1", "name", value(keyboard, "name")));
+    var title = el("div", "title");
+    title.appendChild(el("h1", "name", value(keyboard, "name")));
+    var status = value(keyboard, "status");
+    if (status) title.appendChild(el("div", "status", status));
+    head.appendChild(title);
     if (logoSrc) head.appendChild(buildLogo());
     card.appendChild(head);
-
-    var status = value(keyboard, "status");
-    if (status) card.appendChild(el("div", "status", status));
 
     var specs = el("dl", "specs");
     SPEC_FIELDS.forEach(function (field) {
