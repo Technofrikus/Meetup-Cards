@@ -3,6 +3,10 @@ window.KEYBOARDS = String.raw`
 # One block per keyboard, separated by an empty line.
 # Leave out any line you do not need. Lines starting with # are ignored.
 # Type \n to force a line break inside a value.
+#
+# IMPORTANT: do not delete the very first line (window.KEYBOARDS = ...) and the
+# very last line of this file. Without them the cards cannot be loaded.
+# Never type a backtick character inside this text.
 
 Name: Lazydesigners KradleX
 Status: GB finished, some Extras left
@@ -53,4 +57,5 @@ Switches: Cherry MX Black, vintage
 Keycaps: ePBT 9009
 Plate: Aluminium
 
+# ---- Do not delete the line below: it closes the list. ----
 `;

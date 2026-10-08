@@ -19,6 +19,8 @@ After a rebuild, change the entry in `keyboards.js`, reload and print again.
 ## Fields
 
 Only the first and last line of `keyboards.js` are syntax – leave them as they are.
+If one of them gets deleted, the page shows an error with the lines to add back.
+Never type a backtick character inside the text.
 Everything in between is plain text; field names are not case-sensitive and lines
 starting with `#` are ignored.
 

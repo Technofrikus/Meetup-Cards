@@ -160,6 +160,18 @@
     white-space: pre-line;
   }
 
+  .setup-error {
+    margin: 40px auto;
+    max-width: 560px;
+    padding: 20px 24px;
+    background: #fff;
+    border: 2px solid #c62828;
+    border-radius: 8px;
+    line-height: 1.45;
+  }
+  .setup-error h2 { margin: 0 0 8px; color: #c62828; }
+  .setup-error pre { padding: 12px; background: #f3f3f5; border-radius: 6px; overflow-x: auto; }
+
   .empty {
     margin: 40px auto;
     max-width: 480px;
@@ -169,7 +181,7 @@
 
   @media print {
     body { background: none; }
-    .toolbar, .empty { display: none; }
+    .toolbar, .empty, .setup-error { display: none; }
     .sheet { margin: 0; }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
@@ -291,6 +303,16 @@
   var pageStyle = document.createElement("style");
   document.head.appendChild(pageStyle);
 
+  // Shown when keyboards.js lost its first or last line (the file then fails to load).
+  function buildSetupError() {
+    var box = el("div", "setup-error");
+    box.appendChild(el("h2", null, "keyboards.js could not be read"));
+    box.appendChild(el("p", null, "The first and the last line of the file are needed. Make sure it starts with the first line below, ends with the last line below, and has the keyboards in between:"));
+    box.appendChild(el("pre", null, "window.KEYBOARDS = String.raw`\n\nName: My keyboard\nSwitches: ...\n\n`;"));
+    box.appendChild(el("p", null, "Also check that the text in between contains no backtick (`)."));
+    return box;
+  }
+
   function savedFormat() {
     try {
       var f = localStorage.getItem(STORAGE_KEY);
@@ -309,6 +331,11 @@
     });
 
     sheets.textContent = "";
+    if (typeof window.KEYBOARDS !== "string") {
+      sheets.appendChild(buildSetupError());
+      hint.textContent = "keyboards.js could not be read";
+      return;
+    }
     if (!keyboards.length) {
       sheets.appendChild(el("p", "empty", "No keyboards found. Add entries to keyboards.js and reload."));
       hint.textContent = "";
