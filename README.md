@@ -2,15 +2,15 @@
 
 Printable spec cards for mechanical keyboards:
 
-- **A6**: four per A4 sheet (portrait)
-- **A7**: eight per A4 sheet (landscape – the print dialog switches automatically)
+- **4x**: four cards per sheet (portrait)
+- **8x**: eight cards per sheet (landscape – the print dialog switches automatically)
 
 ## Usage
 
 1. Edit `keyboards.js` – one block of `Field: value` lines per keyboard, blocks separated by an empty line.
 2. Open `index.html` in a browser (double-click, no server needed).
-3. Pick the card size with the **A6 / A7** switch in the toolbar (remembered by the browser).
-4. Press **Print**. Use A4, 100 % scale, margins set to "None".
+3. Pick the paper (**A4 / Letter**, preselected from the browser language) and the cards per sheet (**4x / 8x**) in the toolbar; both are remembered by the browser.
+4. Press **Print**. Use the matching paper size, 100 % scale, margins set to "None".
    The toolbar is not printed.
 5. Cut along the dashed lines.
 

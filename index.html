@@ -7,22 +7,13 @@
 <style>
   /* The print page size is set from script (see applyFormat), because @page cannot depend on a class. */
   :root {
-    --s: 1;            /* content scale: A6 = 1 */
+    --s: 1;            /* content scale: 1 = a 105 x 148.5 mm card */
     --cols: 2;
     --rows: 2;
     --sheet-w: 210mm;
     --sheet-h: 297mm;
     --card-w: 105mm;
     --card-h: 148.5mm;
-  }
-  body[data-format="a7"] {
-    --s: 0.7;
-    --cols: 4;
-    --rows: 2;
-    --sheet-w: 297mm;
-    --sheet-h: 210mm;
-    --card-w: 74.25mm;
-    --card-h: 105mm;
   }
 
   * { box-sizing: border-box; }
@@ -55,19 +46,43 @@
     color: #fff;
     cursor: pointer;
   }
-  .toolbar .formats { display: flex; }
-  .toolbar .formats button {
+  .toolbar .seg { display: flex; }
+  .toolbar .seg button {
     background: #fff;
     color: #111;
     border-radius: 0;
     margin-left: -1px;
   }
-  .toolbar .formats button:first-child { border-radius: 6px 0 0 6px; margin-left: 0; }
-  .toolbar .formats button:last-child { border-radius: 0 6px 6px 0; }
-  .toolbar .formats button[aria-pressed="true"] { background: #111; color: #fff; }
+  .toolbar .seg button:first-child { border-radius: 6px 0 0 6px; margin-left: 0; }
+  .toolbar .seg button:last-child { border-radius: 0 6px 6px 0; }
+  .toolbar .seg button[aria-pressed="true"] { background: #111; color: #fff; }
   .toolbar .hint { color: #666; }
+  .toolbar .help-btn {
+    margin-left: auto;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 50%;
+    background: #fff;
+    color: #111;
+    font-weight: 600;
+  }
+  .toolbar .help-btn[aria-expanded="true"] { background: #111; color: #fff; }
+  .help {
+    max-width: 640px;
+    margin: 12px auto 0;
+    padding: 16px 20px;
+    background: #fff;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  .help h2 { margin: 0 0 8px; font-size: 16px; }
+  .help p { margin: 0 0 8px; }
+  .help dl { margin: 0; }
+  .help dt { font-weight: 600; margin-top: 8px; }
+  .help dd { margin: 0; color: #444; }
 
-  /* One A4 sheet = 2 x 2 A6 cards (portrait sheet) or 4 x 2 A7 cards (landscape sheet) */
+  /* One sheet = 2 x 2 cards (portrait sheet, 4x) or 4 x 2 cards (landscape sheet, 8x) */
   .sheet {
     width: var(--sheet-w);
     height: var(--sheet-h);
@@ -102,7 +117,7 @@
   }
   .name {
     margin: 0;
-    font-size: calc(25pt * var(--s));
+    font-size: calc(25pt * var(--s) * var(--fit, 1));
     line-height: 1.08;
     font-weight: 800;
     letter-spacing: -0.02em;
@@ -181,7 +196,7 @@
 
   @media print {
     body { background: none; }
-    .toolbar, .empty, .setup-error { display: none; }
+    .toolbar, .help, .empty, .setup-error { display: none; }
     .sheet { margin: 0; }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
@@ -190,23 +205,37 @@
 <body>
 <div class="toolbar">
   <button type="button" onclick="window.print()">Print</button>
-  <div class="formats" role="group" aria-label="Card format">
-    <button type="button" data-format="a6" aria-pressed="true">A6</button>
-    <button type="button" data-format="a7" aria-pressed="false">A7</button>
+  <div class="seg" role="group" aria-label="Paper size" data-key="paper">
+    <button type="button" data-value="a4" aria-pressed="true">A4</button>
+    <button type="button" data-value="letter" aria-pressed="false">Letter</button>
+  </div>
+  <div class="seg" role="group" aria-label="Cards per sheet" data-key="layout">
+    <button type="button" data-value="4x" aria-pressed="true" title="4 cards per sheet">4x</button>
+    <button type="button" data-value="8x" aria-pressed="false" title="8 cards per sheet">8x</button>
   </div>
   <span class="hint" id="hint"></span>
+  <button type="button" class="help-btn" id="help-btn" aria-expanded="false" aria-controls="help" title="Explain all fields">?</button>
 </div>
+<div class="help" id="help" hidden></div>
 <main id="sheets"></main>
 
 <script src="keyboards.js"></script>
 <script>
 (function () {
-  // A6: 2 x 2 per portrait A4 sheet. A7: 4 x 2 per landscape A4 sheet.
-  var FORMATS = {
-    a6: { cols: 2, rows: 2, orientation: "portrait", label: "A6" },
-    a7: { cols: 4, rows: 2, orientation: "landscape", label: "A7" },
+  // 4x: 2 x 2 cards per portrait sheet. 8x: 4 x 2 cards per landscape sheet.
+  var LAYOUTS = {
+    "4x": { cols: 2, rows: 2, orientation: "portrait" },
+    "8x": { cols: 4, rows: 2, orientation: "landscape" },
   };
-  var STORAGE_KEY = "meetup-cards-format";
+  // Sheet size in mm (portrait) and the CSS @page keyword.
+  var PAPERS = {
+    a4: { w: 210, h: 297, label: "A4", css: "A4" },
+    letter: { w: 215.9, h: 279.4, label: "US Letter", css: "letter" },
+  };
+  var STORAGE_KEY = "meetup-cards-settings";
+  // Regions that use US Letter; everywhere else defaults to A4.
+  var LETTER_REGIONS = ["US", "CA", "MX", "CL", "CO", "VE", "PH", "CR", "GT", "DO", "PA", "PR", "SV", "NI", "HN", "BO"];
+  var REF_W = 105, REF_H = 148.5;  // card size the type sizes were designed for
   var logoSrc = "";
   var LOGO_CANDIDATES = ["logo.svg", "logo.png", "logo.jpg", "logo.jpeg", "logo.webp"];
   var SPEC_FIELDS = [
@@ -214,6 +243,16 @@
     ["keycaps", "Keycaps"],
     ["plate", "Plate"],
     ["notes", "Notes"],
+  ];
+  // Every field that can be used in keyboards.js, in the order shown on the card.
+  var ALL_FIELDS = [
+    ["Name", "Required. The title of the card. A block without a Name is ignored.", "My keyboard"],
+    ["Status", "Optional. Shown under the name, e.g. the group buy or build status.", "Work in progress"],
+    ["Switches", "Optional. The switches used.", "Cherry ULP tactile"],
+    ["Keycaps", "Optional. The keycap set used.", "KAM Astha"],
+    ["Plate", "Optional. The plate material or type.", "FR4"],
+    ["Notes", "Optional. Free text shown at the end of the specs. Also accepted: Note, Comment, Comments.", "Wireless, ZMK"],
+    ["URL", "Optional. A link shown at the bottom of the card.", "https://example.com"],
   ];
   // Alternative spellings accepted in keyboards.js
   var ALIASES = { note: "notes", comment: "notes", comments: "notes" };
@@ -258,6 +297,19 @@
     return card;
   }
 
+  // Long names shrink until they fit into two lines (but not below MIN_FIT).
+  var MIN_FIT = 0.6;
+  function fitNames() {
+    document.querySelectorAll(".name").forEach(function (name) {
+      name.style.removeProperty("--fit");
+      var fit = 1;
+      while (fit > MIN_FIT && name.getBoundingClientRect().height > parseFloat(getComputedStyle(name).lineHeight) * 2.5) {
+        fit = Math.round((fit - 0.04) * 100) / 100;
+        name.style.setProperty("--fit", fit);
+      }
+    });
+  }
+
   function buildLogo() {
     var img = el("img", "logo");
     img.src = logoSrc;
@@ -274,6 +326,7 @@
       document.querySelectorAll(".head").forEach(function (head) {
         head.appendChild(buildLogo());
       });
+      fitNames();
     };
     probe.onerror = function () { loadLogo(index + 1); };
     probe.src = LOGO_CANDIDATES[index];
@@ -308,26 +361,77 @@
     var box = el("div", "setup-error");
     box.appendChild(el("h2", null, "keyboards.js could not be read"));
     box.appendChild(el("p", null, "The first and the last line of the file are needed. Make sure it starts with the first line below, ends with the last line below, and has the keyboards in between:"));
-    box.appendChild(el("pre", null, "window.KEYBOARDS = String.raw`\n\nName: My keyboard\nSwitches: ...\n\n`;"));
+    box.appendChild(el("pre", null, "window.KEYBOARDS = String.raw`\n\n" + ALL_FIELDS.map(function (f) { return f[0] + ": " + f[2]; }).join("\n") + "\n\n`;"));
+    box.appendChild(el("p", null, "All possible fields are listed above (only Name is required). Press the ? button in the toolbar for an explanation of each field."));
     box.appendChild(el("p", null, "Also check that the text in between contains no backtick (`)."));
     return box;
   }
 
-  function savedFormat() {
-    try {
-      var f = localStorage.getItem(STORAGE_KEY);
-      return FORMATS[f] ? f : "a6";
-    } catch (e) { return "a6"; }
+  function buildHelp() {
+    var box = document.getElementById("help");
+    box.appendChild(el("h2", null, "Fields in keyboards.js"));
+    box.appendChild(el("p", null, "One block per keyboard, one \"Field: value\" line per field, an empty line between keyboards. Lines starting with # are ignored. Type \\n inside a value to force a line break."));
+    var dl = el("dl");
+    ALL_FIELDS.forEach(function (f) {
+      dl.appendChild(el("dt", null, f[0]));
+      dl.appendChild(el("dd", null, f[1]));
+    });
+    box.appendChild(dl);
+    var btn = document.getElementById("help-btn");
+    btn.addEventListener("click", function () {
+      box.hidden = !box.hidden;
+      btn.setAttribute("aria-expanded", String(!box.hidden));
+    });
+  }
+  buildHelp();
+
+  function detectPaper() {
+    var langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
+    for (var i = 0; i < langs.length; i++) {
+      var m = /^[a-z]{2,3}[-_]([A-Za-z]{2})\b/.exec(langs[i]);
+      if (m) return LETTER_REGIONS.indexOf(m[1].toUpperCase()) >= 0 ? "letter" : "a4";
+    }
+    return "a4";
   }
 
-  function render(format) {
-    var spec = FORMATS[format];
-    var perSheet = spec.cols * spec.rows;
+  function loadSettings() {
+    var settings = { paper: detectPaper(), layout: "4x" };
+    try {
+      var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      if (PAPERS[saved.paper]) settings.paper = saved.paper;
+      if (LAYOUTS[saved.layout]) settings.layout = saved.layout;
+    } catch (e) {}
+    return settings;
+  }
 
-    document.body.setAttribute("data-format", format);
-    pageStyle.textContent = "@page { size: A4 " + spec.orientation + "; margin: 0; }";
-    document.querySelectorAll(".formats button").forEach(function (b) {
-      b.setAttribute("aria-pressed", String(b.getAttribute("data-format") === format));
+  function saveSettings() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch (e) {}
+  }
+
+  var settings = loadSettings();
+
+  function render() {
+    var spec = LAYOUTS[settings.layout];
+    var paper = PAPERS[settings.paper];
+    var perSheet = spec.cols * spec.rows;
+    var landscape = spec.orientation === "landscape";
+    var sheetW = landscape ? paper.h : paper.w;
+    var sheetH = landscape ? paper.w : paper.h;
+    var cardW = sheetW / spec.cols;
+    var cardH = sheetH / spec.rows;
+    var root = document.documentElement.style;
+
+    root.setProperty("--sheet-w", sheetW + "mm");
+    root.setProperty("--sheet-h", sheetH + "mm");
+    root.setProperty("--card-w", cardW + "mm");
+    root.setProperty("--card-h", cardH + "mm");
+    root.setProperty("--cols", spec.cols);
+    root.setProperty("--rows", spec.rows);
+    root.setProperty("--s", Math.min(cardW / REF_W, cardH / REF_H).toFixed(3));
+    pageStyle.textContent = "@page { size: " + paper.css + " " + spec.orientation + "; margin: 0; }";
+    document.querySelectorAll(".seg button").forEach(function (b) {
+      var key = b.parentNode.getAttribute("data-key");
+      b.setAttribute("aria-pressed", String(settings[key] === b.getAttribute("data-value")));
     });
 
     sheets.textContent = "";
@@ -356,18 +460,19 @@
     var sheetCount = Math.ceil(keyboards.length / perSheet);
     hint.textContent = keyboards.length + (keyboards.length === 1 ? " card" : " cards") + " on " +
       sheetCount + (sheetCount === 1 ? " sheet" : " sheets") +
-      " · print on A4 " + spec.orientation + " at 100% scale, no margins";
+      " · print on " + paper.label + " " + spec.orientation + " at 100% scale, no margins";
+    fitNames();
   }
 
-  document.querySelectorAll(".formats button").forEach(function (b) {
+  document.querySelectorAll(".seg button").forEach(function (b) {
     b.addEventListener("click", function () {
-      var format = b.getAttribute("data-format");
-      try { localStorage.setItem(STORAGE_KEY, format); } catch (e) {}
-      render(format);
+      settings[b.parentNode.getAttribute("data-key")] = b.getAttribute("data-value");
+      saveSettings();
+      render();
     });
   });
 
-  render(savedFormat());
+  render();
   loadLogo(0);
 })();
 </script>
