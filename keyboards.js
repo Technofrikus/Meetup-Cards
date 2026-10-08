@@ -18,68 +18,18 @@ window.KEYBOARDS = String.raw`
 #              Also accepted: Note, Comment, Comments.
 #   URL:       A link shown at the bottom of the card.
 
-Name: Lazydesigners KradleX
-Status: GB finished, some Extras left
-Switches: Invokeys Hojicha Reserve (Keeb.supply)
-Keycaps: RAMA Kate Keycaps, Lake \n (bought from ZFrontier)
-Plate: PLA, printed
-Note:
-URL: https://lazydesigners.cn/kradlexgbextras/
+Name: Example 40%
+Status: OpenSource
+Switches: Invokeys Hojicha Reserve
+Keycaps: DSS 99Cent
+Plate: Aluminium
+Notes: Replace these examples with your own keyboards.
 
-Name: Bally \n (Bully case with Bally PCB)
-Status: GB finished, no Extras
-Switches: Ashkeebs Alexandrite
-Keycaps: KAM Astha
-Plate: Custom Foaming TPU
-Note: Custom ballholder with BTUs and foaming TPU for quieter operation. Custom Firmware for a better cursor feeling.
-
-Name: Planckton
+Name: Example 30%
 Status: Work in progress
-Switches: Cherry ULP tactile
-Keycaps: Subliminla Contradiction by Pseudoko - ULP Fork by Purox 
-Plate: none
-Note: Wireless, ZMK
-URL: https://moinboards.de/projects/planckton/
-
-Name: Kastenwagen BAN
-Status: IC on 40s server
-Switches: Invokeys Hojicha Reserve (Alphas) \n Epomaker Budgerigar (Numpad)
-Keycaps: PBTFans Less but Better
-Plate: FR4
-Note: If you are interested please reach out on the 40s or via my website
-URL: moinboards.de
-
-Name: Stucco{10¼} with QEZberry PCB
-Status: PCB opensource, case available
-Switches: Epomaker Budgerigar
-Keycaps: DSA Grabbag \n (just my selection from a grabbag)
-Plate: PLA
-URL: moinboards.de
-
-Name: Snake - Moinboard Remix
-Status: Fully Opensource
-Switches: Everfree Grayish
-Keycaps: GMK Stargaze 
-Plate: Resin
-Note: Original Case and PCB by 1000eyes. This case by Technofrikus (Moinboards)
-URL: https://moinboards.de/projects/snake/
-
-Name: QAZpad - case by Moinboards
-Status: Available at keeb.supply
 Switches: KTT Roses
-Keycaps: DSS Micro (R3 only)
-Plate: FR4
-Note: PCB by NoahK, case by Technofrikus (Moinboards)
-URL: https://moinboards.de/projects/qazpad/
-
-Name: Lazydesigner Dimple R1
-Status: R3 extras available
-Switches: Invokeys Daydreamer
-Keycaps: DSS 99Cent (in Stock at keeb.supply)
-Plate: Brass
-Note:
-URL: https://lazydesigners.cn/dimpler3extras/
-
+Keycaps: SLK Dessau
+URL: https://example.com
 
 
 # ---- Do not delete the line below: it closes the list. ----
