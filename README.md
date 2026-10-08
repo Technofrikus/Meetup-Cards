@@ -5,6 +5,8 @@ Printable spec cards for mechanical keyboards:
 - **4x**: four cards per sheet (portrait)
 - **8x**: eight cards per sheet (landscape – the print dialog switches automatically)
 
+<p align="center"><img src="img/sample.png" alt="Sample card" height="400"></p>
+
 ## Usage
 
 Open `index.html` in a browser – from a web server or by double-clicking the file.
@@ -58,7 +60,8 @@ file you can put back in place of `keyboards.js`.
 
 A file named `logo.svg`, `logo.png`, `logo.jpg`, `logo.jpeg` or `logo.webp` next
 to `index.html` is used as the logo when the page is opened from disk and no
-logo was uploaded.
+logo was uploaded. **Remove logo** takes it off the cards as well; the file
+itself is not touched, and you can add it again with the **Logo** button.
 
 ## Fields
 

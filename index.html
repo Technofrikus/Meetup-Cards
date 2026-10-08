@@ -391,6 +391,7 @@
   var REF_W = 105, REF_H = 148.5;  // card size the type sizes were designed for
   var logoSrc = "";
   var uploadedLogo = "";
+  var NO_LOGO = "none";  // stored in place of a logo after "Remove logo", so a logo file on disk stays off too
   var LOGO_CANDIDATES = ["logo.svg", "logo.png", "logo.jpg", "logo.jpeg", "logo.webp"];
   var SPEC_FIELDS = [
     ["switches", "Switches"],
@@ -430,7 +431,8 @@
 
   function value(keyboard, field) {
     var v = keyboard[field];
-    return v == null ? "" : String(v).trim();
+    // Spaces around a line break are dropped, so every line starts without a space.
+    return v == null ? "" : String(v).trim().replace(/[ \t]*\r?\n[ \t]*/g, "\n");
   }
 
   function buildCard(keyboard, index) {
@@ -493,6 +495,7 @@
     probe.onload = function () {
       if (uploadedLogo) return;
       logoSrc = probe.src;
+      document.getElementById("logo-remove-btn").hidden = false;
       renderCards();
     };
     probe.onerror = function () { loadLogoFile(index + 1); };
@@ -503,14 +506,12 @@
     uploadedLogo = src;
     logoSrc = src;
     try {
-      if (src) localStorage.setItem(LOGO_KEY, src);
-      else localStorage.removeItem(LOGO_KEY);
+      localStorage.setItem(LOGO_KEY, src || NO_LOGO);
     } catch (e) {
       alert("The logo is too large to be remembered by the browser. It is used until you close or reload the page.");
     }
     document.getElementById("logo-remove-btn").hidden = !src;
     renderCards();
-    if (!src) loadLogoFile(0);
   }
 
   function readLogo(file) {
@@ -1024,13 +1025,15 @@
   } else if (edited && seed !== fileText && location.protocol === "file:") {
     buildFileNotice();
   }
+  var logoRemoved = false;
   try { uploadedLogo = localStorage.getItem(LOGO_KEY) || ""; } catch (e) {}
+  if (uploadedLogo === NO_LOGO) { uploadedLogo = ""; logoRemoved = true; }
   logoSrc = uploadedLogo;
   document.getElementById("logo-remove-btn").hidden = !uploadedLogo;
   applyEditorVisibility();
   renderEditor();
   renderCards();
-  loadLogoFile(0);
+  if (!logoRemoved) loadLogoFile(0);
 })();
 </script>
 </body>
