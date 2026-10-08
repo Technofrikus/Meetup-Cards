@@ -258,15 +258,17 @@
 
   .url {
     margin-top: auto;
-    padding-top: calc(3mm * var(--s));
-    border-top: 0.35mm solid #111;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
     gap: calc(3mm * var(--s));
   }
+  /* The rule belongs to the text; the QR code rises beside it, bottom edges aligned. */
   .url-text {
+    flex: 1;
     min-width: 0;
+    padding-top: calc(3mm * var(--s));
+    border-top: 0.35mm solid #111;
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-size: calc(9pt * var(--s));
     overflow-wrap: anywhere;
@@ -278,6 +280,8 @@
     width: calc(var(--qr-modules) * 0.5mm * var(--s));
     height: calc(var(--qr-modules) * 0.5mm * var(--s));
     shape-rendering: crispEdges;
+    /* The white quiet zone is paper anyway: let it hang over the content edge so the dark modules line up with the card margin. */
+    margin: calc(-1mm * var(--s)) calc(-1mm * var(--s)) calc(-1mm * var(--s)) 0;
   }
 
   .setup-error {
