@@ -333,7 +333,8 @@
         <button type="button" data-value="text" aria-pressed="false">Text</button>
       </div>
       <button type="button" id="import-btn" title="Load a keyboards.js file">Import</button>
-      <button type="button" id="export-btn" title="Save the keyboards as keyboards.js">Export</button>
+      <button type="button" id="export-btn" title="Download the keyboards as keyboards.js">Export</button>
+      <button type="button" id="save-btn" title="Write the keyboards straight into your keyboards.js file" hidden>Save</button>
       </div>
       <div class="row">
       <button type="button" id="logo-btn" title="Add a logo to the top right corner of every card">Logo</button>
@@ -890,6 +891,43 @@
     link.click();
     setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
   });
+
+  // Save writes into the chosen keyboards.js itself (Chromium browsers only). The first click
+  // asks for the file, later clicks overwrite it without further questions.
+  var saveBtn = document.getElementById("save-btn");
+  var saveHandle = null;
+  if (typeof window.showSaveFilePicker === "function") {
+    saveBtn.hidden = false;
+    saveBtn.addEventListener("click", function () {
+      var content = toKeyboardsFile(serializeKeyboards(list));
+      var picking = saveHandle ? Promise.resolve(saveHandle) :
+        window.showSaveFilePicker({ suggestedName: "keyboards.js", types: [{ description: "keyboards.js", accept: { "text/javascript": [".js"] } }] });
+      picking.then(function (handle) {
+        saveHandle = handle;
+        return handle.createWritable().then(function (out) {
+          return out.write(content).then(function () { return out.close(); });
+        });
+      }).then(function () {
+        // The file now equals the list, so the next reload has nothing to ask about.
+        seed = fromKeyboardsFile(content);
+        saveData();
+        var label = saveBtn.textContent;
+        saveBtn.textContent = "Saved";
+        setTimeout(function () { saveBtn.textContent = label; }, 1500);
+      }, function (err) {
+        if (err && err.name === "AbortError") return;
+        saveHandle = null;
+        alert("Could not save the file: " + (err && err.message || err));
+      });
+    });
+  }
+
+  // Local use only: warn when closing the page while keyboards.js differs from the list.
+  if (typeof window.showSaveFilePicker === "function" && location.protocol === "file:") {
+    window.addEventListener("beforeunload", function (e) {
+      if (serializeKeyboards(list) !== serializeKeyboards(parseKeyboards(seed))) e.preventDefault();
+    });
+  }
 
   document.getElementById("clear-btn").addEventListener("click", function () {
     if (!list.length || !confirm("Remove all keyboards? Use Export first if you want to keep them.")) return;

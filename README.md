@@ -25,6 +25,7 @@ Everything you enter is saved in your browser only (nothing is sent to a server)
 |--------|--------------|
 | **Import** | Loads a `keyboards.js` file (or a plain text file in the text format) and replaces the current list. |
 | **Export** | Downloads the current list as `keyboards.js` – as a backup, to move it to another device, or to keep several sets. |
+| **Save** | Chromium browsers only (Chrome, Edge): writes the list directly into your `keyboards.js`. Pick the file once; later clicks overwrite it. |
 | **Logo** | Adds an image to the top right corner of every card. **Remove logo** takes it off again. |
 | **Clear** | Removes all keyboards. |
 
@@ -55,8 +56,10 @@ default logo online – `logo.*` files on the server are ignored.
 Opened from disk, the page starts with the keyboards from `keyboards.js`. You can
 keep editing that file in a text editor and reload, as before. Once you change
 something in the browser, the browser's list is used instead; if `keyboards.js`
-changes afterwards, the page asks which of the two to show. **Export** writes a
-file you can put back in place of `keyboards.js`.
+changes afterwards, the page asks which of the two to show. **Export** downloads a
+file you can put back in place of `keyboards.js`. In Chrome, Edge and other
+Chromium browsers **Save** writes straight into your `keyboards.js`: pick the file
+once, and every further click overwrites it. Closing the page with changes not yet saved asks for confirmation.
 
 A file named `logo.svg`, `logo.png`, `logo.jpg`, `logo.jpeg` or `logo.webp` next
 to `index.html` is used as the logo when the page is opened from disk and no
