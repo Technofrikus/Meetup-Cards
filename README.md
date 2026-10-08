@@ -46,7 +46,7 @@ On a Mac use ⌘ instead of Ctrl. The **?** button shows this list on the page.
 
 ## Hosting
 
-Copy `index.html` to any web server; it needs nothing else. Optionally put a
+Copy `index.html` and the `lib` folder to any web server; it needs nothing else. Optionally put a
 `keyboards.js` next to it: its keyboards are the example cards a visitor sees on
 the first visit. Without the file two built-in examples are shown. There is no
 default logo online – `logo.*` files on the server are ignored.
@@ -91,7 +91,7 @@ Keycaps: ePBT 9009
 | `Keycaps` |                                     |
 | `Plate` |                                     |
 | `Notes` | Free text for anything else. `Note` and `Comment` work too. |
-| `URL` | Printed at the bottom of the card.  |
+| `URL` | Printed at the bottom of the card, with a QR code next to it. A missing `https://` is added for the QR code; text that is not a link gets no code. |
 
 Empty or missing fields are simply left off the card.
 
@@ -105,3 +105,9 @@ Keycaps: GMK Olivia\nRama Kate, Lake
 ```
 
 Text that is too long for the card wraps automatically.
+
+## Third-party code
+
+The QR codes are made in the browser (no network needed) by
+[qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) by Kazuhiko Arase,
+MIT license, included as `lib/qrcode.js`; the license text is in `lib/LICENSE-qrcode-generator.txt`.

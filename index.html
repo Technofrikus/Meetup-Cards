@@ -26,7 +26,7 @@
     flex-direction: column;
     background: #e9e9ec;
     color: #111;
-    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
   }
 
   button {
@@ -204,8 +204,8 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: calc(6mm * var(--s));
-    min-height: calc(20mm * var(--s));
   }
+  .title { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
   .name {
     margin: 0;
     font-size: calc(25pt * var(--s) * var(--fit, 1));
@@ -224,7 +224,7 @@
 
   .status {
     align-self: flex-start;
-    margin-top: calc(4mm * var(--s));
+    margin-top: calc(3.5mm * var(--s));
     padding: calc(1.2mm * var(--s)) calc(3.2mm * var(--s));
     border: 0.35mm solid #111;
     border-radius: 99mm;
@@ -235,10 +235,10 @@
   }
 
   .specs {
-    margin: calc(9mm * var(--s)) 0 0;
+    margin: calc(6mm * var(--s)) 0 0;
     display: flex;
     flex-direction: column;
-    gap: calc(6mm * var(--s));
+    gap: calc(4mm * var(--s));
   }
   .specs dt {
     font-size: calc(8pt * var(--s));
@@ -258,12 +258,30 @@
 
   .url {
     margin-top: auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: calc(3mm * var(--s));
+  }
+  /* The rule belongs to the text; the QR code rises beside it, bottom edges aligned. */
+  .url-text {
+    flex: 1;
+    min-width: 0;
     padding-top: calc(3mm * var(--s));
     border-top: 0.35mm solid #111;
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-size: calc(9pt * var(--s));
     overflow-wrap: anywhere;
     white-space: pre-line;
+  }
+  /* Each QR module is 0.5 mm: about the smallest size phone cameras still read reliably when printed. */
+  .qr {
+    flex: none;
+    width: calc(var(--qr-modules) * 0.5mm * var(--s));
+    height: calc(var(--qr-modules) * 0.5mm * var(--s));
+    shape-rendering: crispEdges;
+    /* The white quiet zone is paper anyway: let it hang over the content edge so the dark modules line up with the card margin. */
+    margin: calc(-1mm * var(--s)) calc(-1mm * var(--s)) calc(-1mm * var(--s)) 0;
   }
 
   .setup-error {
@@ -355,6 +373,7 @@
 </div>
 
 <!-- Optional: the cards shown on the first visit. Without this file the built-in examples are used. -->
+<script src="lib/qrcode.js"></script>
 <script src="keyboards.js" onerror="window.KEYBOARDS_MISSING = true"></script>
 <script>
 (function () {
@@ -442,13 +461,15 @@
       if (settings.view === "form") focusEntry(index, "[data-field=name]");
     });
 
+    // Name and status sit together on the left; the logo stays on the right.
     var head = el("div", "head");
-    head.appendChild(el("h1", "name", value(keyboard, "name")));
+    var title = el("div", "title");
+    title.appendChild(el("h1", "name", value(keyboard, "name")));
+    var status = value(keyboard, "status");
+    if (status) title.appendChild(el("div", "status", status));
+    head.appendChild(title);
     if (logoSrc) head.appendChild(buildLogo());
     card.appendChild(head);
-
-    var status = value(keyboard, "status");
-    if (status) card.appendChild(el("div", "status", status));
 
     var specs = el("dl", "specs");
     SPEC_FIELDS.forEach(function (field) {
@@ -462,9 +483,63 @@
     if (specs.children.length) card.appendChild(specs);
 
     var url = value(keyboard, "url");
-    if (url) card.appendChild(el("div", "url", url));
+    if (url) card.appendChild(buildUrl(url));
 
     return card;
+  }
+
+  // The URL as typed, plus a QR code of it at the bottom right.
+  function buildUrl(url) {
+    var box = el("div", "url");
+    box.appendChild(el("div", "url-text", url));
+    var qr = buildQr(url);
+    if (qr) box.appendChild(qr);
+    return box;
+  }
+
+  // Repairs what people leave out when typing a link, so the code still opens something:
+  // a missing scheme gets https://, "//host" gets https:, and spaces / line breaks are removed.
+  // Returns "" for text that cannot be a link (then there is no QR code).
+  function normalizeUrl(text) {
+    var u = text.replace(/\s+/g, "");
+    if (!u) return "";
+    if (/^(mailto|tel|sms):/i.test(u)) return u;
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(u)) return u;
+    if (/^\/\//.test(u)) return "https:" + u;
+    u = u.replace(/^[a-z][a-z0-9+.-]*:\/*/i, function (m) { return /^(https?):/i.test(m) ? "" : m; });
+    // Needs something host-like (a dot or localhost); otherwise it is just a word.
+    if (!/^([a-z0-9-]+\.)+[a-z0-9-]{2,}|^localhost\b/i.test(u)) return "";
+    return "https://" + u;
+  }
+
+  // UTF-8 bytes, so links with umlauts etc. scan correctly.
+  if (window.qrcode && window.TextEncoder) {
+    qrcode.stringToBytes = function (s) { return Array.from(new TextEncoder().encode(s)); };
+  }
+
+  function buildQr(text) {
+    var data = normalizeUrl(text);
+    if (!data || !window.qrcode) return null;
+    var code;
+    try {
+      code = qrcode(0, "M");  // smallest version that fits, error correction M (~15 %)
+      code.addData(data);
+      code.make();
+    } catch (e) {
+      return null;  // too long for a QR code
+    }
+    var n = code.getModuleCount(), margin = 2, size = n + margin * 2, path = "";
+    for (var r = 0; r < n; r++) {
+      for (var c = 0; c < n; c++) {
+        if (code.isDark(r, c)) path += "M" + (c + margin) + " " + (r + margin) + "h1v1h-1z";
+      }
+    }
+    var wrap = document.createElement("div");
+    wrap.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="qr" viewBox="0 0 ' + size + " " + size +
+      '" role="img" aria-label="QR code"><rect width="' + size + '" height="' + size + '" fill="#fff"/><path d="' + path + '" fill="#000"/></svg>';
+    var svg = wrap.firstChild;
+    svg.style.setProperty("--qr-modules", size);
+    return svg;
   }
 
   // Long names shrink until they fit into two lines (but not below MIN_FIT).
