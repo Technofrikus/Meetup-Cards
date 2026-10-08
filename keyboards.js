@@ -7,6 +7,16 @@ window.KEYBOARDS = String.raw`
 # IMPORTANT: do not delete the very first line (window.KEYBOARDS = ...) and the
 # very last line of this file. Without them the cards cannot be loaded.
 # Never type a backtick character inside this text.
+#
+# Fields (all optional except Name; the order of the lines does not matter):
+#   Name:      Required. The title of the card. A block without a Name is ignored.
+#   Status:    Shown under the name, e.g. the group buy or build status.
+#   Switches:  The switches used.
+#   Keycaps:   The keycap set used.
+#   Plate:     The plate material or type.
+#   Notes:     Free text shown at the end of the specs.
+#              Also accepted: Note, Comment, Comments.
+#   URL:       A link shown at the bottom of the card.
 
 Name: Lazydesigners KradleX
 Status: GB finished, some Extras left
@@ -16,12 +26,12 @@ Plate: PLA, printed
 Note:
 URL: https://lazydesigners.cn/kradlexgbextras/
 
-Name: Bally (Bully case with Bally PCB)
+Name: Bally \n (Bully case with Bally PCB)
 Status: GB finished, no Extras
 Switches: Ashkeebs Alexandrite
 Keycaps: KAM Astha
 Plate: Custom Foaming TPU
-Note: Custom ballholder with BTUs and foaming TPU for quieter operation
+Note: Custom ballholder with BTUs and foaming TPU for quieter operation. Custom Firmware for a better cursor feeling.
 
 Name: Planckton
 Status: Work in progress
@@ -39,23 +49,38 @@ Plate: FR4
 Note: If you are interested please reach out on the 40s or via my website
 URL: moinboards.de
 
-Name: Example TKL
-Status: Work in progress
-Switches: Cherry MX Black, vintage
-Keycaps: ePBT 9009
-Plate: Aluminium
+Name: Stucco{10¼} with QEZberry PCB
+Status: PCB opensource, case available
+Switches: Epomaker Budgerigar
+Keycaps: DSA Grabbag \n (just my selection from a grabbag)
+Plate: PLA
+URL: moinboards.de
 
-Name: Example TKL
-Status: Work in progress
-Switches: Cherry MX Black, vintage
-Keycaps: ePBT 9009
-Plate: Aluminium
+Name: Snake - Moinboard Remix
+Status: Fully Opensource
+Switches: Everfree Grayish
+Keycaps: GMK Stargaze 
+Plate: Resin
+Note: Original Case and PCB by 1000eyes. This case by Technofrikus (Moinboards)
+URL: https://moinboards.de/projects/snake/
 
-Name: Example TKL
-Status: Work in progress
-Switches: Cherry MX Black, vintage
-Keycaps: ePBT 9009
-Plate: Aluminium
+Name: QAZpad - case by Moinboards
+Status: Available at keeb.supply
+Switches: KTT Roses
+Keycaps: DSS Micro (R3 only)
+Plate: FR4
+Note: PCB by NoahK, case by Technofrikus (Moinboards)
+URL: https://moinboards.de/projects/qazpad/
+
+Name: Lazydesigner Dimple R1
+Status: R3 extras available
+Switches: Invokeys Daydreamer
+Keycaps: DSS 99Cent (in Stock at keeb.supply)
+Plate: Brass
+Note:
+URL: https://lazydesigners.cn/dimpler3extras/
+
+
 
 # ---- Do not delete the line below: it closes the list. ----
 `;
