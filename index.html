@@ -260,10 +260,24 @@
     margin-top: auto;
     padding-top: calc(3mm * var(--s));
     border-top: 0.35mm solid #111;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: calc(3mm * var(--s));
+  }
+  .url-text {
+    min-width: 0;
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-size: calc(9pt * var(--s));
     overflow-wrap: anywhere;
     white-space: pre-line;
+  }
+  /* Each QR module is 0.5 mm: about the smallest size phone cameras still read reliably when printed. */
+  .qr {
+    flex: none;
+    width: calc(var(--qr-modules) * 0.5mm * var(--s));
+    height: calc(var(--qr-modules) * 0.5mm * var(--s));
+    shape-rendering: crispEdges;
   }
 
   .setup-error {
@@ -355,6 +369,7 @@
 </div>
 
 <!-- Optional: the cards shown on the first visit. Without this file the built-in examples are used. -->
+<script src="lib/qrcode.js"></script>
 <script src="keyboards.js" onerror="window.KEYBOARDS_MISSING = true"></script>
 <script>
 (function () {
@@ -462,9 +477,63 @@
     if (specs.children.length) card.appendChild(specs);
 
     var url = value(keyboard, "url");
-    if (url) card.appendChild(el("div", "url", url));
+    if (url) card.appendChild(buildUrl(url));
 
     return card;
+  }
+
+  // The URL as typed, plus a QR code of it at the bottom right.
+  function buildUrl(url) {
+    var box = el("div", "url");
+    box.appendChild(el("div", "url-text", url));
+    var qr = buildQr(url);
+    if (qr) box.appendChild(qr);
+    return box;
+  }
+
+  // Repairs what people leave out when typing a link, so the code still opens something:
+  // a missing scheme gets https://, "//host" gets https:, and spaces / line breaks are removed.
+  // Returns "" for text that cannot be a link (then there is no QR code).
+  function normalizeUrl(text) {
+    var u = text.replace(/\s+/g, "");
+    if (!u) return "";
+    if (/^(mailto|tel|sms):/i.test(u)) return u;
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(u)) return u;
+    if (/^\/\//.test(u)) return "https:" + u;
+    u = u.replace(/^[a-z][a-z0-9+.-]*:\/*/i, function (m) { return /^(https?):/i.test(m) ? "" : m; });
+    // Needs something host-like (a dot or localhost); otherwise it is just a word.
+    if (!/^([a-z0-9-]+\.)+[a-z0-9-]{2,}|^localhost\b/i.test(u)) return "";
+    return "https://" + u;
+  }
+
+  // UTF-8 bytes, so links with umlauts etc. scan correctly.
+  if (window.qrcode && window.TextEncoder) {
+    qrcode.stringToBytes = function (s) { return Array.from(new TextEncoder().encode(s)); };
+  }
+
+  function buildQr(text) {
+    var data = normalizeUrl(text);
+    if (!data || !window.qrcode) return null;
+    var code;
+    try {
+      code = qrcode(0, "M");  // smallest version that fits, error correction M (~15 %)
+      code.addData(data);
+      code.make();
+    } catch (e) {
+      return null;  // too long for a QR code
+    }
+    var n = code.getModuleCount(), margin = 2, size = n + margin * 2, path = "";
+    for (var r = 0; r < n; r++) {
+      for (var c = 0; c < n; c++) {
+        if (code.isDark(r, c)) path += "M" + (c + margin) + " " + (r + margin) + "h1v1h-1z";
+      }
+    }
+    var wrap = document.createElement("div");
+    wrap.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="qr" viewBox="0 0 ' + size + " " + size +
+      '" role="img" aria-label="QR code"><rect width="' + size + '" height="' + size + '" fill="#fff"/><path d="' + path + '" fill="#000"/></svg>';
+    var svg = wrap.firstChild;
+    svg.style.setProperty("--qr-modules", size);
+    return svg;
   }
 
   // Long names shrink until they fit into two lines (but not below MIN_FIT).
