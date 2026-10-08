@@ -1,13 +1,18 @@
 # Meetup Cards
 
-Printable A6 spec cards for mechanical keyboards, four per A4 sheet.
+Printable spec cards for mechanical keyboards:
+
+- **A6**: four per A4 sheet (portrait)
+- **A7**: eight per A4 sheet (landscape – the print dialog switches automatically)
 
 ## Usage
 
 1. Edit `keyboards.js` – one block of `Field: value` lines per keyboard, blocks separated by an empty line.
 2. Open `index.html` in a browser (double-click, no server needed).
-3. Press **Print**. Use A4, 100 % scale, margins set to "None".
-4. Cut along the dashed centre lines.
+3. Pick the card size with the **A6 / A7** switch in the toolbar (remembered by the browser).
+4. Press **Print**. Use A4, 100 % scale, margins set to "None".
+   The toolbar is not printed.
+5. Cut along the dashed lines.
 
 After a rebuild, change the entry in `keyboards.js`, reload and print again.
 

@@ -5,7 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Meetup Cards</title>
 <style>
-  @page { size: A4 portrait; margin: 0; }
+  /* The print page size is set from script (see applyFormat), because @page cannot depend on a class. */
+  :root {
+    --s: 1;            /* content scale: A6 = 1 */
+    --cols: 2;
+    --rows: 2;
+    --sheet-w: 210mm;
+    --sheet-h: 297mm;
+    --card-w: 105mm;
+    --card-h: 148.5mm;
+  }
+  body[data-format="a7"] {
+    --s: 0.7;
+    --cols: 4;
+    --rows: 2;
+    --sheet-w: 297mm;
+    --sheet-h: 210mm;
+    --card-w: 74.25mm;
+    --card-h: 105mm;
+  }
 
   * { box-sizing: border-box; }
 
@@ -37,17 +55,27 @@
     color: #fff;
     cursor: pointer;
   }
+  .toolbar .formats { display: flex; }
+  .toolbar .formats button {
+    background: #fff;
+    color: #111;
+    border-radius: 0;
+    margin-left: -1px;
+  }
+  .toolbar .formats button:first-child { border-radius: 6px 0 0 6px; margin-left: 0; }
+  .toolbar .formats button:last-child { border-radius: 0 6px 6px 0; }
+  .toolbar .formats button[aria-pressed="true"] { background: #111; color: #fff; }
   .toolbar .hint { color: #666; }
 
-  /* One A4 sheet = 2 x 2 A6 cards */
+  /* One A4 sheet = 2 x 2 A6 cards (portrait sheet) or 4 x 2 A7 cards (landscape sheet) */
   .sheet {
-    width: 210mm;
-    height: 297mm;
+    width: var(--sheet-w);
+    height: var(--sheet-h);
     margin: 16px auto;
     background: #fff;
     display: grid;
-    grid-template-columns: 105mm 105mm;
-    grid-template-rows: 148.5mm 148.5mm;
+    grid-template-columns: repeat(var(--cols), var(--card-w));
+    grid-template-rows: repeat(var(--rows), var(--card-h));
     overflow: hidden;
     break-after: page;
   }
@@ -57,23 +85,24 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    padding: 11mm 10mm 10mm;
+    padding: calc(11mm * var(--s)) calc(10mm * var(--s)) calc(10mm * var(--s));
     overflow: hidden;
   }
-  /* Cut guides along the sheet's centre lines */
-  .card:nth-child(odd) { border-right: 0.2mm dashed #bbb; }
-  .card:nth-child(-n+2) { border-bottom: 0.2mm dashed #bbb; }
+  /* Cut guides between the cards (script marks the last column / row) */
+  .card { border-right: 0.2mm dashed #bbb; border-bottom: 0.2mm dashed #bbb; }
+  .card.last-col { border-right: 0; }
+  .card.last-row { border-bottom: 0; }
 
   .head {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 6mm;
-    min-height: 20mm;
+    gap: calc(6mm * var(--s));
+    min-height: calc(20mm * var(--s));
   }
   .name {
     margin: 0;
-    font-size: 25pt;
+    font-size: calc(25pt * var(--s));
     line-height: 1.08;
     font-weight: 800;
     letter-spacing: -0.02em;
@@ -82,39 +111,39 @@
   }
   .logo {
     flex: none;
-    max-width: 24mm;
-    max-height: 18mm;
+    max-width: calc(24mm * var(--s));
+    max-height: calc(18mm * var(--s));
     object-fit: contain;
   }
 
   .status {
     align-self: flex-start;
-    margin-top: 4mm;
-    padding: 1.2mm 3.2mm;
+    margin-top: calc(4mm * var(--s));
+    padding: calc(1.2mm * var(--s)) calc(3.2mm * var(--s));
     border: 0.35mm solid #111;
     border-radius: 99mm;
-    font-size: 9pt;
+    font-size: calc(9pt * var(--s));
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
 
   .specs {
-    margin: 9mm 0 0;
+    margin: calc(9mm * var(--s)) 0 0;
     display: flex;
     flex-direction: column;
-    gap: 6mm;
+    gap: calc(6mm * var(--s));
   }
   .specs dt {
-    font-size: 8pt;
+    font-size: calc(8pt * var(--s));
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: #666;
   }
   .specs dd {
-    margin: 1mm 0 0;
-    font-size: 15pt;
+    margin: calc(1mm * var(--s)) 0 0;
+    font-size: calc(15pt * var(--s));
     line-height: 1.2;
     font-weight: 500;
     overflow-wrap: anywhere;
@@ -123,10 +152,10 @@
 
   .url {
     margin-top: auto;
-    padding-top: 3mm;
+    padding-top: calc(3mm * var(--s));
     border-top: 0.35mm solid #111;
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 9pt;
+    font-size: calc(9pt * var(--s));
     overflow-wrap: anywhere;
     white-space: pre-line;
   }
@@ -149,6 +178,10 @@
 <body>
 <div class="toolbar">
   <button type="button" onclick="window.print()">Print</button>
+  <div class="formats" role="group" aria-label="Card format">
+    <button type="button" data-format="a6" aria-pressed="true">A6</button>
+    <button type="button" data-format="a7" aria-pressed="false">A7</button>
+  </div>
   <span class="hint" id="hint"></span>
 </div>
 <main id="sheets"></main>
@@ -156,7 +189,13 @@
 <script src="keyboards.js"></script>
 <script>
 (function () {
-  var CARDS_PER_SHEET = 4;
+  // A6: 2 x 2 per portrait A4 sheet. A7: 4 x 2 per landscape A4 sheet.
+  var FORMATS = {
+    a6: { cols: 2, rows: 2, orientation: "portrait", label: "A6" },
+    a7: { cols: 4, rows: 2, orientation: "landscape", label: "A7" },
+  };
+  var STORAGE_KEY = "meetup-cards-format";
+  var logoSrc = "";
   var LOGO_CANDIDATES = ["logo.svg", "logo.png", "logo.jpg", "logo.jpeg", "logo.webp"];
   var SPEC_FIELDS = [
     ["switches", "Switches"],
@@ -184,6 +223,7 @@
 
     var head = el("div", "head");
     head.appendChild(el("h1", "name", value(keyboard, "name")));
+    if (logoSrc) head.appendChild(buildLogo());
     card.appendChild(head);
 
     var status = value(keyboard, "status");
@@ -206,16 +246,21 @@
     return card;
   }
 
+  function buildLogo() {
+    var img = el("img", "logo");
+    img.src = logoSrc;
+    img.alt = "";
+    return img;
+  }
+
   // The logo is optional: only add it to the cards once a file actually loaded.
   function loadLogo(index) {
     if (index >= LOGO_CANDIDATES.length) return;
     var probe = new Image();
     probe.onload = function () {
+      logoSrc = probe.src;
       document.querySelectorAll(".head").forEach(function (head) {
-        var img = el("img", "logo");
-        img.src = probe.src;
-        img.alt = "";
-        head.appendChild(img);
+        head.appendChild(buildLogo());
       });
     };
     probe.onerror = function () { loadLogo(index + 1); };
@@ -243,24 +288,59 @@
   var keyboards = parseKeyboards(window.KEYBOARDS).filter(function (k) { return k && value(k, "name"); });
   var sheets = document.getElementById("sheets");
   var hint = document.getElementById("hint");
+  var pageStyle = document.createElement("style");
+  document.head.appendChild(pageStyle);
 
-  if (!keyboards.length) {
-    sheets.appendChild(el("p", "empty", "No keyboards found. Add entries to keyboards.js and reload."));
-    return;
+  function savedFormat() {
+    try {
+      var f = localStorage.getItem(STORAGE_KEY);
+      return FORMATS[f] ? f : "a6";
+    } catch (e) { return "a6"; }
   }
 
-  for (var i = 0; i < keyboards.length; i += CARDS_PER_SHEET) {
-    var sheet = el("div", "sheet");
-    keyboards.slice(i, i + CARDS_PER_SHEET).forEach(function (k) { sheet.appendChild(buildCard(k)); });
-    while (sheet.children.length < CARDS_PER_SHEET) sheet.appendChild(el("section", "card"));
-    sheets.appendChild(sheet);
+  function render(format) {
+    var spec = FORMATS[format];
+    var perSheet = spec.cols * spec.rows;
+
+    document.body.setAttribute("data-format", format);
+    pageStyle.textContent = "@page { size: A4 " + spec.orientation + "; margin: 0; }";
+    document.querySelectorAll(".formats button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-format") === format));
+    });
+
+    sheets.textContent = "";
+    if (!keyboards.length) {
+      sheets.appendChild(el("p", "empty", "No keyboards found. Add entries to keyboards.js and reload."));
+      hint.textContent = "";
+      return;
+    }
+
+    for (var i = 0; i < keyboards.length; i += perSheet) {
+      var sheet = el("div", "sheet");
+      keyboards.slice(i, i + perSheet).forEach(function (k) { sheet.appendChild(buildCard(k)); });
+      while (sheet.children.length < perSheet) sheet.appendChild(el("section", "card"));
+      Array.prototype.forEach.call(sheet.children, function (card, n) {
+        if (n % spec.cols === spec.cols - 1) card.classList.add("last-col");
+        if (n >= perSheet - spec.cols) card.classList.add("last-row");
+      });
+      sheets.appendChild(sheet);
+    }
+
+    var sheetCount = Math.ceil(keyboards.length / perSheet);
+    hint.textContent = keyboards.length + (keyboards.length === 1 ? " card" : " cards") + " on " +
+      sheetCount + (sheetCount === 1 ? " sheet" : " sheets") +
+      " · print on A4 " + spec.orientation + " at 100% scale, no margins";
   }
 
-  var sheetCount = Math.ceil(keyboards.length / CARDS_PER_SHEET);
-  hint.textContent = keyboards.length + (keyboards.length === 1 ? " card" : " cards") + " on " +
-    sheetCount + (sheetCount === 1 ? " sheet" : " sheets") +
-    " · print on A4 at 100% scale, no margins";
+  document.querySelectorAll(".formats button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var format = b.getAttribute("data-format");
+      try { localStorage.setItem(STORAGE_KEY, format); } catch (e) {}
+      render(format);
+    });
+  });
 
+  render(savedFormat());
   loadLogo(0);
 })();
 </script>
