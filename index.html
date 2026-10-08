@@ -121,6 +121,8 @@
   .kb-actions { display: flex; gap: 6px; margin-top: 12px; }
   .kb-actions button { padding: 3px 10px; font-size: 13px; }
   .kb-actions .spacer { flex: 1; }
+  .kb .kb-actions .duck { display: flex; align-items: center; gap: 4px; margin: 0 6px 0 0; font-size: 15px; letter-spacing: 0; cursor: pointer; user-select: none; }
+  .kb .kb-actions .duck input { width: auto; padding: 0; margin: 0; }
   .add-btn { width: 100%; }
   .text-view {
     flex: 1;
@@ -440,6 +442,9 @@
     ["Esc", "Close this help"],
   ];
   // Alternative spellings accepted in keyboards.js
+  // The duck checkbox: the QR code of that keyboard leads here, whatever URL is typed.
+  var DUCK_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+  function isDuck(keyboard) { return /^(yes|true|1|x)$/i.test(value(keyboard, "duck")); }
   var ALIASES = { note: "notes", comment: "notes", comments: "notes" };
 
   function el(tag, className, text) {
@@ -483,16 +488,16 @@
     if (specs.children.length) card.appendChild(specs);
 
     var url = value(keyboard, "url");
-    if (url) card.appendChild(buildUrl(url));
+    if (url) card.appendChild(buildUrl(url, isDuck(keyboard)));
 
     return card;
   }
 
   // The URL as typed, plus a QR code of it at the bottom right.
-  function buildUrl(url) {
+  function buildUrl(url, duck) {
     var box = el("div", "url");
     box.appendChild(el("div", "url-text", url));
-    var qr = buildQr(url);
+    var qr = buildQr(duck ? DUCK_URL : url);
     if (qr) box.appendChild(qr);
     return box;
   }
@@ -628,7 +633,7 @@
   }
 
   function serializeKeyboards(keyboards) {
-    var known = ALL_FIELDS.map(function (f) { return f[0].toLowerCase(); });
+    var known = ALL_FIELDS.map(function (f) { return f[0].toLowerCase(); }).concat("duck");
     return keyboards.map(function (k) {
       // The Name line is always written, so that a keyboard without any text keeps its place.
       var lines = ["Name: " + encodeValue(value(k, "name"))];
@@ -636,6 +641,7 @@
         var v = value(k, f[0].toLowerCase());
         if (v) lines.push(f[0] + ": " + encodeValue(v));
       });
+      if (isDuck(k)) lines.push("Duck: yes");
       Object.keys(k).forEach(function (key) {
         if (known.indexOf(key) < 0 && value(k, key)) lines.push(key + ": " + encodeValue(value(k, key)));
       });
@@ -866,6 +872,20 @@
       if (moveKeyboard(index, 1)) focusEntry(index + 1, index + 1 < list.length - 1 ? "[data-action=down]" : "[data-action=up]");
     }).disabled = index === list.length - 1;
     actions.appendChild(el("span", "spacer"));
+    var duck = el("label", "duck", "🦆");
+    duck.title = "Duck";
+    var check = el("input");
+    check.type = "checkbox";
+    check.checked = isDuck(keyboard);
+    check.tabIndex = -1;
+    check.setAttribute("aria-label", "Duck");
+    check.addEventListener("change", function () {
+      keyboard.duck = check.checked ? "yes" : "";
+      rawText = null;
+      changed();
+    });
+    duck.insertBefore(check, duck.firstChild);
+    actions.appendChild(duck);
     function duplicate() {
       list.splice(index + 1, 0, Object.assign({}, keyboard));
       listChanged();
