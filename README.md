@@ -43,7 +43,7 @@ The whole editor works without a mouse:
 | Ctrl+Shift+Backspace | Delete the current keyboard |
 
 On a Mac use ⌘ instead of Ctrl. The **?** button shows this list on the page.
-**Hide editor** in the toolbar gives the cards the whole window.
+The **Editor** toggle in the toolbar (the panel icon) hides the editor so the cards get the whole window.
 
 ## Hosting
 
