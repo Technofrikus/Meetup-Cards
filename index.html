@@ -123,6 +123,21 @@
   .kb-actions .spacer { flex: 1; }
   .kb .kb-actions .duck { display: flex; align-items: center; gap: 4px; margin: 0 6px 0 0; font-size: 15px; letter-spacing: 0; cursor: pointer; user-select: none; }
   .kb .kb-actions .duck input { width: auto; padding: 0; margin: 0; }
+  .kb-flags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
+  .kb-flags-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666; }
+  .flag-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid #b8b8c0;
+    border-radius: 6px;
+    background: #fff;
+    color: #666;
+    font-size: 13px;
+  }
+  .flag-toggle.on { border-color: #111; color: #111; font-weight: 600; }
+  .flag-toggle .flag-icon { flex: none; width: 16px; height: 16px; }
   .add-btn { width: 100%; }
   .text-view {
     flex: 1;
@@ -235,6 +250,29 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
+
+  /* Handling warnings: tri-state badges under the name (forbidden / allowed). */
+  .flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(2.5mm * var(--s));
+    margin-top: calc(4mm * var(--s));
+  }
+  .flag {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(1.6mm * var(--s));
+    padding: calc(1mm * var(--s)) calc(2.8mm * var(--s));
+    border: 0.35mm solid #111;
+    border-radius: calc(2mm * var(--s));
+    font-size: calc(9pt * var(--s));
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  /* The forbidden badge is inverted so it stands out; both print in plain black and white. */
+  .flag-no { background: #111; color: #fff; }
+  .flag .flag-icon { flex: none; width: calc(4.6mm * var(--s)); height: calc(4.6mm * var(--s)); }
 
   .specs {
     margin: calc(6mm * var(--s)) 0 0;
@@ -421,8 +459,16 @@
     ["plate", "Plate"],
     ["notes", "Notes"],
   ];
-  // Every field of a keyboard, in the order shown on the card and in the form.
+  // Tri-state handling flags, shown as badges on the card. Stored as "no" (forbidden)
+  // or "yes" (allowed); a missing value means the flag is off.
+  // [field key, off label, forbidden label, allowed label]
+  var FLAG_FIELDS = [
+    ["touch", "Touch", "NO Touching", "Touching OK"],
+    ["pickup", "Pickup", "NO Pickup", "Pickup OK"],
+  ];
+  // Every field of a keyboard, in the order shown in the form and in the text file.
   // [field name, example value]. Only Name is required.
+  // Touch and Pickup are tri-state handling flags (see FLAG_FIELDS), not plain text fields.
   var ALL_FIELDS = [
     ["Name", "Keyboard name"],
     ["Status", "Work in progress"],
@@ -431,6 +477,8 @@
     ["Plate", "FR4"],
     ["Notes", "Wireless, ZMK"],
     ["URL", "https://example.com"],
+    ["Touch", "no"],
+    ["Pickup", "no"],
   ];
   var SHORTCUTS = [
     ["Tab / Shift+Tab", "Next / previous field"],
@@ -445,7 +493,11 @@
   // The duck checkbox: the QR code of that keyboard leads here, whatever URL is typed.
   var DUCK_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
   function isDuck(keyboard) { return /^(yes|true|1|x)$/i.test(value(keyboard, "duck")); }
-  var ALIASES = { note: "notes", comment: "notes", comments: "notes" };
+  var ALIASES = {
+    note: "notes", comment: "notes", comments: "notes",
+    notouch: "touch", "no-touch": "touch",
+    dontpickup: "pickup", "dont-pickup": "pickup", donotpickup: "pickup",
+  };
 
   function el(tag, className, text) {
     var node = document.createElement(tag);
@@ -458,6 +510,91 @@
     var v = keyboard[field];
     // Spaces around a line break are dropped, so every line starts without a space.
     return v == null ? "" : String(v).trim().replace(/[ \t]*\r?\n[ \t]*/g, "\n");
+  }
+
+  // ---- Handling flags (tri-state) ----
+
+  // 0 = off, 1 = forbidden, 2 = allowed.
+  function flagState(keyboard, field) {
+    var v = value(keyboard, field).toLowerCase();
+    if (/^(no|false|0|forbidden)$/.test(v)) return 1;
+    if (/^(yes|true|1|allowed)$/.test(v)) return 2;
+    return 0;
+  }
+
+  function isFlagField(key) {
+    return FLAG_FIELDS.some(function (f) { return f[0] === key; });
+  }
+
+  // Flat black-and-white icons, drawn as SVG so they stay crisp when printed.
+  function flagIcon(kind) {
+    var NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("class", "flag-icon");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2.4");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    function add(tag, attrs) {
+      var node = document.createElementNS(NS, tag);
+      Object.keys(attrs).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+      svg.appendChild(node);
+    }
+    if (kind === "forbidden") {
+      add("circle", { cx: 12, cy: 12, r: 9 });
+      add("line", { x1: 5.6, y1: 5.6, x2: 18.4, y2: 18.4 });
+    } else if (kind === "allowed") {
+      add("circle", { cx: 12, cy: 12, r: 9 });
+      add("path", { d: "M8 12.5l2.6 2.6L16 9.6" });
+    } else {
+      add("rect", { x: 4, y: 4, width: 16, height: 16, rx: 3, "stroke-dasharray": "3 3" });
+    }
+    return svg;
+  }
+
+  // The badges shown on the card, e.g. a forbidden "NO Touching" chip.
+  function buildFlags(keyboard) {
+    var box = el("div", "flags");
+    FLAG_FIELDS.forEach(function (f) {
+      var state = flagState(keyboard, f[0]);
+      if (!state) return;
+      var chip = el("div", "flag " + (state === 1 ? "flag-no" : "flag-ok"));
+      chip.appendChild(flagIcon(state === 1 ? "forbidden" : "allowed"));
+      chip.appendChild(el("span", null, state === 1 ? f[2] : f[3]));
+      box.appendChild(chip);
+    });
+    return box.children.length ? box : null;
+  }
+
+  // The editor control: one button that cycles off -> forbidden -> allowed -> off.
+  function buildFlagToggle(keyboard, index, f) {
+    var field = f[0];
+    var btn = el("button", "flag-toggle");
+    btn.type = "button";
+    btn.id = "kb-" + index + "-" + field;
+    btn.setAttribute("data-field", field);
+    btn.setAttribute("role", "checkbox");
+    function paint() {
+      var state = flagState(keyboard, field);
+      btn.textContent = "";
+      btn.appendChild(flagIcon(state === 1 ? "forbidden" : state === 2 ? "allowed" : "off"));
+      btn.appendChild(el("span", null, state === 0 ? f[1] : state === 1 ? f[2] : f[3]));
+      btn.classList.toggle("on", state !== 0);
+      btn.setAttribute("aria-checked", state === 0 ? "false" : state === 1 ? "true" : "mixed");
+      btn.setAttribute("aria-label", f[1] + ": " + (state === 0 ? "off" : state === 1 ? f[2] : f[3]));
+    }
+    btn.addEventListener("click", function () {
+      var next = (flagState(keyboard, field) + 1) % 3;
+      keyboard[field] = next === 0 ? "" : next === 1 ? "no" : "yes";
+      rawText = null;
+      paint();
+      changed();
+    });
+    paint();
+    return btn;
   }
 
   function buildCard(keyboard, index) {
@@ -475,6 +612,9 @@
     head.appendChild(title);
     if (logoSrc) head.appendChild(buildLogo());
     card.appendChild(head);
+
+    var flags = buildFlags(keyboard);
+    if (flags) card.appendChild(flags);
 
     var specs = el("dl", "specs");
     SPEC_FIELDS.forEach(function (field) {
@@ -832,6 +972,7 @@
 
     ALL_FIELDS.forEach(function (f) {
       var key = f[0].toLowerCase();
+      if (isFlagField(key)) return;  // tri-state handling flags are rendered below
       // Status is a single line on the card; every other field may contain line breaks.
       var input = el(key === "status" ? "input" : "textarea");
       if (key === "status") input.type = "text"; else input.rows = 1;
@@ -851,6 +992,11 @@
       box.appendChild(label);
       box.appendChild(input);
     });
+
+    var flags = el("div", "kb-flags");
+    flags.appendChild(el("span", "kb-flags-label", "Handling"));
+    FLAG_FIELDS.forEach(function (f) { flags.appendChild(buildFlagToggle(keyboard, index, f)); });
+    box.appendChild(flags);
 
     var actions = el("div", "kb-actions");
     // The buttons are left out of the Tab order, so that Tab goes from the last field
