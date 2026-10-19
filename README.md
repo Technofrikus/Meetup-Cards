@@ -27,6 +27,7 @@ Everything you enter is saved in your browser only (nothing is sent to a server)
 | **Export** | Downloads the current list as `keyboards.js` – as a backup, to move it to another device, or to keep several sets. |
 | **Save** | Chromium browsers only (Chrome, Edge): writes the list directly into your `keyboards.js`. Pick the file once; later clicks overwrite it. |
 | **Logo** | Adds an image to the top right corner of every card. **Remove logo** takes it off again. |
+| **Handling** | Per keyboard: **Touch** and **Pickup** buttons that cycle off → forbidden → allowed, printed as badges on the card. |
 | **Clear** | Removes all keyboards. |
 
 ### Keyboard
@@ -42,7 +43,7 @@ The whole editor works without a mouse:
 | Ctrl+Shift+Backspace | Delete the current keyboard |
 
 On a Mac use ⌘ instead of Ctrl. The **?** button shows this list on the page.
-**Hide editor** in the toolbar gives the cards the whole window.
+The **Editor** toggle in the toolbar (the panel icon) hides the editor so the cards get the whole window.
 
 ## Hosting
 
@@ -92,8 +93,23 @@ Keycaps: ePBT 9009
 | `Plate` |                                     |
 | `Notes` | Free text for anything else. `Note` and `Comment` work too. |
 | `URL` | Printed at the bottom of the card, with a QR code next to it. A missing `https://` is added for the QR code; text that is not a link gets no code. |
+| `Touch` | Handling warning. `no` shows a black "NO Touching" badge with a forbidden icon, `yes` shows "Touching allowed". Leave the line out for neither. |
+| `Pickup` | Same, with "DONT pickup" / "Pickup allowed". |
 
 Empty or missing fields are simply left off the card.
+
+### Handling warnings
+
+`Touch` and `Pickup` are optional warnings about handling the keyboard. In the
+form each one is a single button that cycles through three states:
+
+1. **off** – nothing is printed.
+2. **forbidden** – a black badge with a forbidden icon, e.g. "NO Touching".
+3. **allowed** – an outlined badge with a check icon, e.g. "Touching allowed".
+
+In the text view and in `keyboards.js` the same states are written as `no`
+(forbidden) and `yes` (allowed); leaving the line out turns the warning off.
+The icons are flat black and white, so they print cleanly on a mono printer.
 
 ## Line breaks
 
